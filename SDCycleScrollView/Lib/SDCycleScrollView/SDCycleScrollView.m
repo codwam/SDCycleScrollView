@@ -440,7 +440,7 @@ NSString * const ID = @"cycleCell";
             CGFloat viewWidth = self.mainView.sd_width;
             CGFloat contentOffsetX = (int)(self.mainView.contentOffset.x / viewWidth) * viewWidth;
             self.finalContentOffset = CGPointMake(contentOffsetX + self.mainView.sd_width, self.mainView.contentOffset.y);
-            NSLog(@"final contentOffset: %@", NSStringFromCGPoint(self.finalContentOffset));
+//            NSLog(@"final contentOffset: %@", NSStringFromCGPoint(self.finalContentOffset));
             
             [self beginAnimation];
         }
