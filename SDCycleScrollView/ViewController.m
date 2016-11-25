@@ -98,6 +98,7 @@
     cycleScrollView2.pageControlAliment = SDCycleScrollViewPageContolAlimentRight;
     cycleScrollView2.titlesGroup = titles;
     cycleScrollView2.currentPageDotColor = [UIColor whiteColor]; // 自定义分页控件小圆标颜色
+    cycleScrollView2.animationPointsPerSecond = 200;
     [demoContainerView addSubview:cycleScrollView2];
     
     //         --- 模拟加载延迟

@@ -174,6 +174,11 @@ typedef enum {
 @property (nonatomic, assign) CGFloat titleLabelHeight;
 
 
+/** 滑动时长 */
+//@property (nonatomic, assign) CGFloat scrollDuration;
+/** 每秒移动距离 */
+@property (nonatomic, assign) CGFloat animationPointsPerSecond;
+
 
 //////////////////////  清除缓存接口  //////////////////////
 

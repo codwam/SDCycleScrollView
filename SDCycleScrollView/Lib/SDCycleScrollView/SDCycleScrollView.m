@@ -52,6 +52,10 @@ NSString * const ID = @"cycleCell";
 
 @property (nonatomic, strong) UIImageView *backgroundImageView; // 当imageURLs为空时的背景图
 
+@property (nonatomic, strong) CADisplayLink *displayLink;
+@property (nonatomic, assign) CFTimeInterval lastTimerTick;
+@property (nonatomic, assign) CGPoint finalContentOffset;
+
 @end
 
 @implementation SDCycleScrollView
@@ -420,7 +424,27 @@ NSString * const ID = @"cycleCell";
         }
         return;
     }
-    [_mainView scrollToItemAtIndexPath:[NSIndexPath indexPathForItem:targetIndex inSection:0] atScrollPosition:UICollectionViewScrollPositionNone animated:YES];
+    
+    if (self.animationPointsPerSecond == 0) {
+        [_mainView scrollToItemAtIndexPath:[NSIndexPath indexPathForItem:targetIndex inSection:0] atScrollPosition:UICollectionViewScrollPositionNone animated:YES];
+    } else {
+        if (!self.displayLink) {
+//        switch (self.scrollDirection) {
+//            case UICollectionViewScrollDirectionVertical:
+//                self.finalContentOffset = CGPointMake(self.mainView.contentOffset.x, self.mainView.contentOffset.y + self.mainView.sd_height);
+//                break;
+//            case UICollectionViewScrollDirectionHorizontal:
+//                self.finalContentOffset = CGPointMake(self.mainView.contentOffset.x + self.mainView.sd_width, self.mainView.contentOffset.y);
+//                break;
+//        }
+            CGFloat viewWidth = self.mainView.sd_width;
+            CGFloat contentOffsetX = (int)(self.mainView.contentOffset.x / viewWidth) * viewWidth;
+            self.finalContentOffset = CGPointMake(contentOffsetX + self.mainView.sd_width, self.mainView.contentOffset.y);
+            NSLog(@"final contentOffset: %@", NSStringFromCGPoint(self.finalContentOffset));
+            
+            [self beginAnimation];
+        }
+    }
 }
 
 - (int)currentIndex
@@ -609,6 +633,8 @@ NSString * const ID = @"cycleCell";
 {
     if (self.autoScroll) {
         [self invalidateTimer];
+        
+        [self endAnimation];
     }
 }
 
@@ -637,5 +663,54 @@ NSString * const ID = @"cycleCell";
     }
 }
 
+#pragma mark - DecelerationRate
+
+-(void)beginAnimation {
+//    NSLog(@"begin contentOffset: %@", NSStringFromCGPoint(self.mainView.contentOffset));
+    
+    [self invalidateTimer];
+    
+    self.lastTimerTick = 0;
+//    self.animationPointsPerSecond = 200;
+//    self.finalContentOffset = CGPointMake(..., ...);
+    self.displayLink = [CADisplayLink displayLinkWithTarget:self selector:@selector(displayLinkTick)];
+    [self.displayLink setFrameInterval:1];
+    [self.displayLink addToRunLoop:[NSRunLoop currentRunLoop] forMode:NSRunLoopCommonModes];
+}
+
+-(void)endAnimation {
+    if (self.displayLink) {
+        self.displayLink.paused = YES;
+        [self.displayLink invalidate];
+        self.displayLink = nil;
+    }
+}
+
+-(void)displayLinkTick {
+    static int invokeCount;
+    if (self.lastTimerTick == 0) {
+        invokeCount = 0;
+        self.lastTimerTick = self.displayLink.timestamp;
+        return;
+    }
+    CFTimeInterval currentTimestamp = self.displayLink.timestamp;
+    CGPoint newContentOffset = self.mainView.contentOffset;
+    newContentOffset.x += self.animationPointsPerSecond * (currentTimestamp - self.lastTimerTick);
+//    NSLog(@"count: %d, offset x: %f", ++invokeCount, newContentOffset.x - self.mainView.contentOffset.x);
+    
+    self.lastTimerTick = currentTimestamp;
+    
+    if (newContentOffset.x >= self.finalContentOffset.x) {
+        [self endAnimation];
+        
+        self.mainView.contentOffset = self.finalContentOffset;
+//        NSLog(@"end contentOffset: %@", NSStringFromCGPoint(self.mainView.contentOffset));
+        
+        [self setupTimer];
+    } else {
+        self.mainView.contentOffset = newContentOffset;
+//        NSLog(@"scroll contentOffset: %@", NSStringFromCGPoint(self.mainView.contentOffset));
+    }
+}
 
 @end
